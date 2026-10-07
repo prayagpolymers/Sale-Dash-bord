@@ -1,28 +1,20 @@
-# Prayag CEO Management Dashboard V6
+# Prayag CEO Management Dashboard V7 — Stable Fast Query
 
-CEO presentation version — NO LOGIN SCREEN.
-Opening the GitHub Pages URL goes directly to the management dashboard.
+Direct CEO dashboard — no login.
 
-Fast-query architecture:
-- Does not download the complete 215k+ Sales dataset.
-- Dashboard uses Google Visualization server-side aggregate queries.
-- Party details are loaded only when a party is clicked.
-- Invoice/item details are loaded only when an invoice is clicked.
+V7 changes:
+- Uses Google Visualization server-side aggregate queries.
+- Does NOT download the full 215k+ Sales sheet.
+- Sales is loaded first; accounting failure no longer blanks the entire dashboard.
+- Each source query has a safe fallback.
+- Party details load only when clicked.
+- Invoice/item details load only when an invoice is clicked.
+- Status bar tells whether Sales and accounting data connected.
 
-Dashboard:
-- This Month Sales
-- This Month Collection
-- Outstanding
-- Overdue
-- CN / DN / Sales Return
-- Top Party Sales
-- State Head / State / Group / Party / Month charts
-- Party Outstanding
-- Clickable Party → Invoice → Item details
+Google sharing:
+Sales workbook: 1QIpcfgOVCFjcCmgU_DXKn8h7Bfa8rm2q2wB2HneTvKs
+Accounting workbook: 1oHFpXqVDPRF3Vi3WV9MdNcxkHNjgytLPxXUQgM6o1ok
+Both should be General access: Anyone with the link → Viewer.
 
-Sources:
-Sales: 1QIpcfgOVCFjcCmgU_DXKn8h7Bfa8rm2q2wB2HneTvKs / Sheet1
-Accounts: 1oHFpXqVDPRF3Vi3WV9MdNcxkHNjgytLPxXUQgM6o1ok
-Tabs: SALE RETURN, CN SAP, DN SAP, DEBTOR
-
-Both Google workbooks must be shared: Anyone with the link → Viewer.
+Accounting tabs:
+DEBTOR, CN SAP, DN SAP, SALE RETURN

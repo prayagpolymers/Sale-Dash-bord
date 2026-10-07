@@ -5,7 +5,20 @@ const $=x=>document.getElementById(x), N=x=>String(x??"").trim().toLowerCase().r
 M=x=>"₹"+(Number(x)||0).toLocaleString("en-IN",{maximumFractionDigits:0}),
 E=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 function qdate(d){return `date '${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}'`}
-async function Q(id,sheet,tq){let u=`https://docs.google.com/spreadsheets/d/${id}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(sheet)}&tq=${encodeURIComponent(tq)}`,r=await fetch(u);if(!r.ok)throw Error(sheet+" query failed");return csv(await r.text())}
+async function Q(id,sheet,tq){
+ const base=`https://docs.google.com/spreadsheets/d/${id}/gviz/tq`;
+ const params=new URLSearchParams({tqx:"out:csv",sheet});
+ if(tq) params.set("tq",tq);
+ const u=base+"?"+params.toString();
+ const r=await fetch(u,{cache:"no-store"});
+ const text=await r.text();
+ if(!r.ok || /^error/i.test(text.trim())) throw Error(`${sheet}: Google returned ${r.status}`);
+ return csv(text);
+}
+async function safeQ(id,sheet,tq,fallback=[]){
+ try{return await Q(id,sheet,tq)}
+ catch(e){console.warn(e);return fallback}
+}
 function csv(t){let R=[],r=[],c="",q=0;for(let i=0;i<t.length;i++){let x=t[i],y=t[i+1];if(x=='"'&&q&&y=='"'){c+='"';i++;continue}if(x=='"'){q=!q;continue}if(x==","&&!q){r.push(c);c="";continue}if((x=="\n"||x=="\r")&&!q){if(x=="\r"&&y=="\n")i++;r.push(c);c="";if(r.some(v=>v.trim()))R.push(r);r=[];continue}c+=x}if(c||r.length){r.push(c);R.push(r)}let h=R.shift().map(x=>x.trim());return R.map(a=>Object.fromEntries(h.map((k,i)=>[k,a[i]??""])))}
 const vals=r=>Object.values(r),num=v=>{let x=parseFloat(String(v??"").replace(/[₹,\s]/g,""));return isNaN(x)?0:x};
 function escq(s){return String(s??"").replace(/'/g,"''")}
@@ -42,23 +55,40 @@ async function acc(sheet){
  return {rows,total,month:num(mr[0]?vals(mr[0])[0]:0)}
 }
 async function dashboard(){
- $("loadbar").textContent="Loading compact summaries…";
- let n=new Date(),st=new Date(n.getFullYear(),n.getMonth(),1),nx=new Date(n.getFullYear(),n.getMonth()+1,1),w=baseWhere();
- let [s,party,months,cm]=await Promise.all([
-  Q(SID,S,`select A,L,K,sum(J) ${w} group by A,L,K label sum(J) ''`),
-  Q(SID,S,`select F,A,L,sum(J) ${w} group by F,A,L label sum(J) ''`),
-  Q(SID,S,`select B,sum(J) ${w} group by B label sum(J) ''`),
-  Q(SID,S,`select sum(J) ${baseWhere(`D>=${qdate(st)} and D<${qdate(nx)}`)} label sum(J) ''`)
+ $("loadbar").textContent="Loading Sales summary from Google Sheets…";
+ const n=new Date(),st=new Date(n.getFullYear(),n.getMonth(),1),nx=new Date(n.getFullYear(),n.getMonth()+1,1),w=baseWhere();
+ const salesResults=await Promise.all([
+  safeQ(SID,S,`select A,L,K,sum(J) ${w} group by A,L,K label sum(J) ''`),
+  safeQ(SID,S,`select F,A,L,sum(J) ${w} group by F,A,L label sum(J) ''`),
+  safeQ(SID,S,`select B,sum(J) ${w} group by B label sum(J) ''`),
+  safeQ(SID,S,`select sum(J) ${baseWhere(`D>=${qdate(st)} and D<${qdate(nx)}`)} label sum(J) ''`)
  ]);
- let [pay,cn,dn,ret]=await Promise.all([acc(AS.pay),acc(AS.cn),acc(AS.dn),acc(AS.ret)]);
+ const [s,party,months,cm]=salesResults;
+ const salesRows=(s.length||party.length||months.length||cm.length);
+ if(!salesRows){
+   $("loadbar").textContent="Sales connection failed. Please confirm Sheet1 → Anyone with the link → Viewer.";
+   return;
+ }
+ $("loadbar").textContent="Sales connected. Loading accounting summaries…";
+ const accResults=await Promise.all([
+  safeQ(AID,AS.pay,`select B,sum(D) where B is not null group by B label sum(D) ''`),
+  safeQ(AID,AS.cn,`select E,sum(D) where E is not null group by E label sum(D) ''`),
+  safeQ(AID,AS.dn,`select E,sum(D) where E is not null group by E label sum(D) ''`),
+  safeQ(AID,AS.ret,`select E,sum(F) where E is not null group by E label sum(F) ''`)
+ ]);
+ const [pay,cn,dn,ret]=accResults;
  let sales=cm[0]?num(vals(cm[0])[0])*1.18:0;
  let totalSales=party.reduce((z,r)=>z+num(vals(r)[3])*1.18,0);
- let outstanding=totalSales+dn.total-pay.total-cn.total-ret.total;
- $("salesK").textContent=M(sales);$("collectionK").textContent=M(pay.month);$("outK").textContent=M(outstanding);
- $("cnK").textContent=M(cn.total);$("dnK").textContent=M(dn.total);$("retK").textContent=M(ret.total);
- $("overK").textContent="Click";
+ let payTotal=pay.reduce((z,r)=>z+num(vals(r)[1]),0);
+ let cnTotal=cn.reduce((z,r)=>z+num(vals(r)[1]),0);
+ let dnTotal=dn.reduce((z,r)=>z+num(vals(r)[1]),0);
+ let retTotal=ret.reduce((z,r)=>z+num(vals(r)[1]),0);
+ let outstanding=totalSales+dnTotal-payTotal-cnTotal-retTotal;
+ $("salesK").textContent=M(sales);$("collectionK").textContent=M(pay.reduce((z,r)=>z+num(vals(r)[1]),0));
+ $("outK").textContent=M(outstanding);$("cnK").textContent=M(cnTotal);$("dnK").textContent=M(dnTotal);$("retK").textContent=M(retTotal);
+ $("overK").textContent="View";
  renderParty(party,pay,cn,dn,ret);renderCharts(s,months);
- $("loadbar").textContent="FAST MODE: full 2 lakh-row Sales sheet was NOT downloaded."
+ $("loadbar").textContent="LIVE • Sales and accounting summaries loaded. Details load on click.";
 }
 function renderParty(s,p,c,d,r){
  let m=new Map();
