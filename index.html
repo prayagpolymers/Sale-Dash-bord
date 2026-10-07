@@ -1,47 +1,8 @@
-<!doctype html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Prayag | Sales & Accounts</title>
-<link rel="stylesheet" href="style.css">
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script></head>
-<body>
-<div id="login" class="login hide"><div class="loginbox"><div class="logo">P</div><h1>PRAYAG</h1><p>Sales & Accounting Portal</p>
-<label>Role</label><select id="role"><option>ADMIN</option><option>STATE HEAD</option><option>PARTY</option></select>
-<div id="userWrap"><label>User</label><select id="user"><option value="">Loading users...</option></select></div><button id="loginBtn">OPEN DASHBOARD</button>
-<small id="loginStatus">Loading only small lookup lists…</small></div></div>
-<div id="app"><header><div class="brand"><b>PRAYAG</b><span>Sales & Accounting</span></div><div><span id="roleTag"></span><button id="refresh">↻ Refresh</button><button id="logout">Logout</button></div></header>
-<main>
-<div class="hero"><div><div class="eyebrow">PRAYAG POLYMERS LIMITED</div><h1>CEO MANAGEMENT DASHBOARD</h1><p>India Sales • Collection • Outstanding • Business Performance</p></div><div class="live"><span></span> LIVE DATA</div></div>
-<div class="notice" id="loadbar">Connecting to Google Sheets…</div>
-<section class="filters">
-<div><label>FY</label><select id="fy"><option>ALL</option></select></div><div><label>Month</label><select id="month"><option>ALL</option></select></div>
-<div><label>State Head</label><select id="sh"><option>ALL</option></select></div><div><label>State</label><select id="state"><option>ALL</option></select></div>
-<div><label>Group</label><select id="group"><option>ALL</option></select></div><div><label>Party</label><select id="party"><option>ALL</option></select></div>
-<div><label>From</label><input id="from" type="date"></div><div><label>To</label><input id="to" type="date"></div>
-<div class="wide"><label>Search Party / Invoice / Item Code</label><input id="search" placeholder="Search..."></div>
-</section>
-<section class="cards">
-<button data-card="sales"><small>THIS MONTH SALES</small><strong id="salesK">₹0</strong><em>Party-wise drill down →</em></button>
-<button data-card="collection"><small>THIS MONTH COLLECTION</small><strong id="collectionK">₹0</strong><em>Party-wise payment →</em></button>
-<button data-card="outstanding"><small>OUTSTANDING</small><strong id="outK">₹0</strong><em>Party ledger + ageing →</em></button>
-<button data-card="overdue"><small>OVERDUE 91+ DAYS</small><strong id="overK">₹0</strong><em>Invoices →</em></button>
-<button><small>CREDIT NOTE</small><strong id="cnK">₹0</strong></button>
-<button><small>DEBIT NOTE</small><strong id="dnK">₹0</strong></button>
-<button><small>SALES RETURN</small><strong id="retK">₹0</strong></button><button><small>TOP PARTY SALES</small><strong id="topK">₹0</strong><em id="topParty">—</em></button>
-</section>
-<section class="grid">
-<div class="panel"><h2>Sales by State Head</h2><canvas id="shChart"></canvas></div>
-<div class="panel"><h2>Sales by State</h2><canvas id="stateChart"></canvas></div>
-<div class="panel"><h2>Month-wise Sales vs Collection</h2><canvas id="monthChart"></canvas></div>
-<div class="panel"><h2>Outstanding Ageing</h2><canvas id="ageChart"></canvas></div>
-</section>
-<section class="grid">
-<div class="panel"><h2>Group-wise Sales</h2><canvas id="groupChart"></canvas></div>
-<div class="panel"><h2>Top 10 Parties by Sales</h2><canvas id="partyChart"></canvas></div>
-</section>
-<section class="panel"><div class="title"><h2>Party Outstanding</h2><button data-card="outstanding">Full Report</button></div>
-<table><thead><tr><th>Party</th><th>State</th><th>State Head</th><th>Sales</th><th>Collection</th><th>Outstanding</th><th>91+</th></tr></thead><tbody id="partyRows"></tbody></table></section>
-<section class="panel"><div class="title"><h2>Item-wise Sales</h2><span id="itemCount"></span></div>
-<table><thead><tr><th>Item Code</th><th>Group</th><th>Qty</th><th>Sales</th></tr></thead><tbody id="itemRows"></tbody></table></section>
-</main></div>
-<div id="modal" class="modal hide"><div class="modalbox"><div class="modalhead"><h2 id="mtitle"></h2><button id="close">×</button></div><div id="mbody"></div></div></div>
-<script src="script.js"></script></body></html>
+<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Prayag CEO Management Dashboard</title><link rel="stylesheet" href="style.css"><script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script></head>
+<body><header><div><b>PRAYAG POLYMERS LIMITED</b><span>CEO MANAGEMENT DASHBOARD</span></div><div id="status">Connecting to Prayag API…</div></header>
+<main><div id="errorBox" class="error hide"></div><section class="hero"><div><small>MANAGEMENT MIS</small><h1>CEO MANAGEMENT DASHBOARD</h1><p>Sales • Collection • Outstanding • State Head • Party • Item Performance</p></div></section>
+<section class="filters"><div><label>State Head</label><select id="sh"><option>ALL</option></select></div><div><label>State</label><select id="state"><option>ALL</option></select></div><div><label>Group</label><select id="group"><option>ALL</option></select></div><div><label>FY</label><select id="fy"><option>ALL</option></select></div><div><label>Month</label><select id="month"><option>ALL</option></select></div><div><label>Party</label><select id="party"><option>ALL</option></select></div><button id="apply">Apply</button></section>
+<section class="cards"><button data-k="monthSales"><small>THIS MONTH SALES</small><strong id="monthSales">₹0</strong><em>Click for parties</em></button><button><small>THIS MONTH COLLECTION</small><strong id="monthCollection">₹0</strong></button><button data-k="outstanding"><small>TOTAL OUTSTANDING</small><strong id="outstanding">₹0</strong></button><button><small>TOTAL SALES</small><strong id="salesTotal">₹0</strong></button><button><small>TOTAL COLLECTION</small><strong id="collection">₹0</strong></button><button><small>CREDIT NOTE</small><strong id="cn">₹0</strong></button><button><small>DEBIT NOTE</small><strong id="dn">₹0</strong></button><button><small>SALES RETURN</small><strong id="return">₹0</strong></button></section>
+<section class="grid"><div class="panel"><h2>State Head Sales</h2><canvas id="heads"></canvas></div><div class="panel"><h2>State Sales</h2><canvas id="states"></canvas></div><div class="panel"><h2>Group Sales</h2><canvas id="groups"></canvas></div><div class="panel"><h2>Month-wise Sales</h2><canvas id="months"></canvas></div></section>
+<section class="panel"><h2>Top Parties / Outstanding</h2><table><thead><tr><th>Party</th><th>State Head</th><th>State</th><th>Sales</th><th>Payment</th><th>Outstanding</th></tr></thead><tbody id="partyRows"></tbody></table></section></main>
+<div id="modal" class="modal hide"><div class="modalbox"><div class="mh"><h2 id="mt"></h2><button id="close">×</button></div><div id="mb"></div></div></div><script src="dashboard.js"></script></body></html>
